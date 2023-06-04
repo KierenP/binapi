@@ -491,9 +491,6 @@ websockets::handle websockets::markets(on_markets_received_cb cb)
 websockets::handle websockets::book(const char *pair, on_book_received_cb cb)
 { return pimpl->start_channel(pair, "bookTicker", std::move(cb)); }
 
-websockets::handle websockets::books(on_books_received_cb cb)
-{ return pimpl->start_channel(nullptr, "!bookTicker", std::move(cb)); }
-
 /*************************************************************************************************/
 
 websockets::handle websockets::userdata(
