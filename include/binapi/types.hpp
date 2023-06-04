@@ -249,6 +249,15 @@ struct exchange_info_t {
 
                 friend std::ostream &operator<<(std::ostream &os, const min_notional_t &f);
             };
+            struct notional_t {
+                double_type minNotional;
+                bool applyMinToMarket;
+                double_type maxNotional;
+                bool applyMaxToMarket;
+                std::size_t avgPriceMins;
+
+                friend std::ostream& operator<<(std::ostream& os, const min_notional_t& f);
+            };
             struct iceberg_parts_t {
                 std::size_t limit;
 
@@ -289,6 +298,7 @@ struct exchange_info_t {
                 ,lot_size_t
                 ,market_lot_size_t
                 ,min_notional_t
+                ,notional_t
                 ,iceberg_parts_t
                 ,max_num_orders_t
                 ,max_num_algo_orders_t

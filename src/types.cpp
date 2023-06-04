@@ -540,6 +540,21 @@ std::ostream &operator<<(std::ostream &os, const exchange_info_t::symbol_t::filt
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const exchange_info_t::symbol_t::filter_t::notional_t& o)
+{
+    os
+    << "{"
+    << "\"filterType\":\"MIN_NOTIONAL\","
+    << "\"minNotional\":\"" << o.minNotional << "\""
+    << "\"applyMinToMarket\":\"" << o.applyMinToMarket << "\""
+    << "\"maxNotional\":\"" << o.maxNotional << "\""
+    << "\"applyMaxToMarket\":\"" << o.applyMaxToMarket << "\""
+    << "\"avgPriceMins\":\"" << o.avgPriceMins << "\""
+    << "}";
+
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const exchange_info_t::symbol_t::filter_t::iceberg_parts_t &o) {
     os
     << "{"
@@ -751,6 +766,17 @@ exchange_info_t exchange_info_t::construct(const flatjson::fjson &json) {
                 case fnv1a("MIN_NOTIONAL"): {
                     exchange_info_t::symbol_t::filter_t::min_notional_t item{};
                     __BINAPI_GET2(item, minNotional, fit);
+                    filter.filter = std::move(item);
+
+                    break;
+                }
+                case fnv1a("NOTIONAL"): {
+                    exchange_info_t::symbol_t::filter_t::notional_t item {};
+                    __BINAPI_GET2(item, minNotional, fit);
+                    __BINAPI_GET2(item, applyMinToMarket, fit);
+                    __BINAPI_GET2(item, maxNotional, fit);
+                    __BINAPI_GET2(item, applyMaxToMarket, fit);
+                    __BINAPI_GET2(item, avgPriceMins, fit);
                     filter.filter = std::move(item);
 
                     break;
