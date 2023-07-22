@@ -1,40 +1,13 @@
 cmake_minimum_required(VERSION 3.2)
 project(binapi)
 
-set(CMAKE_CXX_STANDARD 14)
+#----------------------------------------------------------------
+# conan related stuff
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -fsanitize=address")
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
 
-add_definitions(
-    -UNDEBUG
-    -DDTF_HEADER_ONLY
-)
-
-include_directories(
-    ./include
-)
-
-if (DEFINED ${BOOST_INCLUDE_DIR})
-    include_directories(
-        ${BOOST_INCLUDE_DIR}
-    )
-endif()
-
-set(BINAPI_HEADERS
-    binapi/api.hpp
-    binapi/flatjson.hpp
-    binapi/dtf.hpp
-    binapi/double_type.hpp
-    binapi/enums.hpp
-    binapi/errors.hpp
-    binapi/invoker.hpp
-    binapi/message.hpp
-    binapi/pairslist.hpp
-    binapi/reports.hpp
-    binapi/tools.hpp
-    binapi/types.hpp
-    binapi/websocket.hpp
-)
+#----------------------------------------------------------------
 
 set(BINAPI_SOURCES
     src/api.cpp
@@ -47,25 +20,42 @@ set(BINAPI_SOURCES
     src/websocket.cpp
 )
 
-add_executable(
-    ${PROJECT_NAME}
-    #
-    main.cpp
-    #
+add_library(binapi_lib STATIC 
     ${BINAPI_SOURCES}
 )
 
-if (DEFINED ${BOOST_LIB_DIR})
-    target_link_libraries(
-        ${PROJECT_NAME}
-        -L${BOOST_LIB_DIR}
-    )
-endif()
-
-target_link_libraries(
-    ${PROJECT_NAME}
-    z
-    crypto
-    ssl
-    pthread
+target_link_libraries(binapi_lib
+    ${CONAN_LIBS}
 )
+
+target_include_directories(binapi_lib
+    PUBLIC ${CMAKE_SOURCE_DIR}/include
+)
+
+target_compile_definitions(binapi_lib
+    PUBLIC DTF_HEADER_ONLY
+)
+
+target_compile_options(binapi_lib
+    PUBLIC -Wall 
+    PUBLIC -Wextra
+)
+
+target_link_options(binapi_lib
+    PUBLIC -fuse-ld=lld
+)
+
+add_executable(binapi
+    src/main.cpp
+)
+
+target_link_libraries(binapi
+    ${CONAN_LIBS}
+    binapi_lib
+)
+
+add_subdirectory(examples/asynchronous)
+add_subdirectory(examples/asynchronous-user_data)
+add_subdirectory(examples/synchronous)
+add_subdirectory(examples/synchronous-user_data)
+add_subdirectory(examples/websockets)
