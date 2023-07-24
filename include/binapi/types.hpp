@@ -897,6 +897,16 @@ struct book_ticker_t {
 
 /*************************************************************************************************/
 
+struct combined_book_ticker_t {
+    std::string stream;
+    book_ticker_t data;
+
+    static combined_book_ticker_t construct(const flatjson::fjson &json);
+    friend std::ostream& operator<<(std::ostream &os, const combined_book_ticker_t &o);
+};
+
+/*************************************************************************************************/
+
 } // ns ws
 
 /*************************************************************************************************/

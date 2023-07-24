@@ -2116,6 +2116,28 @@ std::ostream& operator<<(std::ostream &os, const book_ticker_t &o) {
 }
 
 /*************************************************************************************************/
+
+combined_book_ticker_t combined_book_ticker_t::construct(const flatjson::fjson &json) {
+    assert(json.is_valid());
+
+    combined_book_ticker_t res{};
+    __BINAPI_GET(stream);
+    res.data = book_ticker_t::construct(json.at("data"));
+
+    return res;
+}
+
+std::ostream& operator<<(std::ostream &os, const combined_book_ticker_t &o) {
+    os
+    << "{"
+    << "\"stream\":\"" << o.stream << "\","
+    << "\"data\":{" << o.data << "}"
+    << "}";
+
+    return os;
+}
+
+/*************************************************************************************************/
 /*************************************************************************************************/
 /*************************************************************************************************/
 

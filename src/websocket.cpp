@@ -251,8 +251,8 @@ struct websockets::impl {
         unsubscribe_all();
     }
 
-    static std::string make_channel_name(const char *pair, const char *channel) {
-        std::string res{"/ws/"};
+    static std::string make_stream_name(const char *pair, const char *channel) {
+        std::string res;
         if ( pair ) {
             res += pair;
             if ( *pair != '!' ) {
@@ -267,8 +267,37 @@ struct websockets::impl {
         return res;
     }
 
+    static std::string make_channel_name(const char *pair, const char *channel) {
+        return "/ws/" + make_stream_name(pair, channel);
+    }
+
+    static std::string make_combined_channel_name(const std::vector<const char *>& pairs, const char *channel) {
+        std::string res{"/stream?streams="};
+        
+        for (const auto& pair : pairs)
+        {
+            res += make_stream_name(pair, channel) + "/";
+        }
+
+        res.pop_back(); // drop trailing '/'
+        
+        return res;
+    }
+
     template<typename F>
-    websockets::handle start_channel(const char *pair, const char *channel, F cb) {
+    websockets::handle start_channel(const char *pair, const char *channel, F cb)
+    {
+        return start_channel(make_channel_name(pair, channel), std::move(cb));
+    }
+
+    template<typename F>
+    websockets::handle start_channel(std::vector<const char *> pairs, const char *channel, F cb)
+    {
+        return start_channel(make_combined_channel_name(std::move(pairs), channel), std::move(cb));
+    }
+
+    template<typename F>
+    websockets::handle start_channel(const std::string& channel_name, F cb) {
         using args_tuple = typename boost::callable_traits::args<F>::type;
         using message_type = typename std::tuple_element<3, args_tuple>::type;
 
@@ -281,9 +310,8 @@ struct websockets::impl {
             delete ws;
         };
         std::shared_ptr<websocket> ws{new websocket(m_ioctx), deleter};
-        std::string schannel = make_channel_name(pair, channel);
 
-        auto wscb = [this, schannel, cb=std::move(cb)]
+        auto wscb = [this, channel_name, cb=std::move(cb)]
             (const char *fl, int ec, std::string errmsg, const char *ptr, std::size_t size) -> bool
         {
             if ( ec ) {
@@ -313,7 +341,7 @@ struct websockets::impl {
             }
 
             try {
-                if ( m_on_message ) { m_on_message(schannel.c_str(), ptr, size); }
+                if ( m_on_message ) { m_on_message(channel_name.c_str(), ptr, size); }
             } catch (const std::exception &ex) {
                 std::fprintf(stderr, "%s: %s\n", __MAKE_FILELINE, ex.what());
                 std::fflush(stderr);
@@ -334,7 +362,7 @@ struct websockets::impl {
         ptr->start(
              m_host
             ,m_port
-            ,schannel
+            ,channel_name
             ,std::move(wscb)
             ,std::move(ws)
         );
@@ -489,6 +517,9 @@ websockets::handle websockets::markets(on_markets_received_cb cb)
 /*************************************************************************************************/
 
 websockets::handle websockets::book(const char *pair, on_book_received_cb cb)
+{ return pimpl->start_channel(pair, "bookTicker", std::move(cb)); }
+
+websockets::handle websockets::book(std::vector<const char *> pair, on_combined_book_received_cb cb)
 { return pimpl->start_channel(pair, "bookTicker", std::move(cb)); }
 
 /*************************************************************************************************/
